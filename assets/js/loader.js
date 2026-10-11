@@ -3,9 +3,9 @@
  *
  * وظیفه‌ها:
  *  ۱) تا آماده شدن «همه چیزِ لازم برای تجربهٔ اسکرول» صفحه را قفل و پوشیده نگه می‌دارد:
- *     فونت، عکس‌های هیرو (کودک/مادر)، آمادگی DOM، و فریم‌های «پوشش درشت» انیمیشن
- *     (همانی که پرواز استیج ۱→۲ برای نرم بودن لازم دارد).
- *  ۲) پیشرفت واقعی را نشان می‌دهد؛ حداقل ۱٫۶ ثانیه (تا نپرد) و حداکثر ۱۰ ثانیه (تا گیر نکند) می‌ماند.
+ *     فونت، عکس‌های هیرو (کودک/مادر)، آمادگی DOM، و «همهٔ فریم‌های» انیمیشن نمایشگر و سنسور
+ *     (۲۱۲ فریم؛ دانلود + دیکود کامل) تا بعد از باز شدن پرده هیچ فریمی کم نباشد و انیمیشن تکه‌تکه نشود.
+ *  ۲) پیشرفت واقعی را نشان می‌دهد؛ حداقل ۱٫۶ ثانیه (تا نپرد) و حداکثر ۳۰ ثانیه (یا ۶ ثانیه بدون هیچ پیشرفتی) تا گیر نکند می‌ماند.
  *  ۳) در پایان لنگه‌ها باز می‌شوند، قفل برداشته می‌شود و رویداد `stickytemp:ready` ارسال می‌شود.
  */
 (function () {
@@ -15,7 +15,7 @@
   if (!el) { root.classList.remove('st-loading'); return; }
 
   window.__stReady = false;
-  var MIN_MS = 1600, MAX_MS = 10000;
+  var MIN_MS = 1600, MAX_MS = 30000, STALL_MS = 6000;   // v4.3: همهٔ فریم‌ها لود می‌شوند؛ سقف ایمنی ۳۰ ثانیه، یا ۶ ثانیه بی‌پیشرفتی
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var t0 = performance.now();
   var FA = '۰۱۲۳۴۵۶۷۸۹';
@@ -47,7 +47,7 @@
 
   /* ---------- پیگیری آماده‌شدن منابع ---------- */
   var part = { font: 0, imgs: 0, load: 0, frames: 0 };
-  var W = { font: 0.08, imgs: 0.17, load: 0.05, frames: 0.70 };
+  var W = { font: 0.04, imgs: 0.08, load: 0.03, frames: 0.85 };
 
   // فونت
   (function () {
@@ -74,13 +74,14 @@
   else document.addEventListener('DOMContentLoaded', function () { part.load = 1; });
 
   // فریم‌های انیمیشن: ProductShot در پایان body بارگذاری می‌شود
-  var shotStarted = false;
+  var shotStarted = false, lastReady = -1, lastProgressAt = performance.now();
   function pollFrames() {
     var PS = window.ProductShot;
     if (!PS || !PS.coarseProgress) return;
     if (!shotStarted) { shotStarted = true; try { PS.startPreload(); } catch (e) {} }
-    var p = PS.coarseProgress();
+    var p = PS.fullProgress ? PS.fullProgress() : PS.coarseProgress();
     part.frames = p.total ? p.ready / p.total : 1;
+    if (p.ready !== lastReady) { lastReady = p.ready; lastProgressAt = performance.now(); }
   }
 
   /* ---------- حلقهٔ نمایش ---------- */
@@ -108,7 +109,7 @@
     if (tempEl) tempEl.textContent = fa(t.toFixed(1));
     if (pctEl) pctEl.textContent = fa(Math.round(p)) + '٪';
     if (barEl) barEl.style.transform = 'scaleX(' + (p / 100).toFixed(4) + ')';
-    var m = p >= 100 ? 4 : p >= 80 ? 3 : p >= 45 ? 2 : p >= 15 ? 1 : 0;
+    var m = p >= 100 ? 4 : p >= 90 ? 3 : p >= 40 ? 2 : p >= 12 ? 1 : 0;
     if (m !== lastMsg && msgEl) { lastMsg = m; msgEl.textContent = MSGS[m]; }
     el.setAttribute('aria-valuenow', Math.round(p));
   }
@@ -128,7 +129,8 @@
     paint(shown);
 
     if (shown >= 100 && !finishing) { finish(); return; }
-    if (elapsed > MAX_MS && !finishing) { shown = 100; paint(100); finish(); return; }
+    var stalled = part.font >= 1 && part.imgs >= 1 && part.load >= 1 && (now - lastProgressAt) > STALL_MS;   // شبکه قطع/گیر کرده
+    if ((elapsed > MAX_MS || stalled) && !finishing) { shown = 100; paint(100); finish(); return; }
     requestAnimationFrame(tick);
   }
 

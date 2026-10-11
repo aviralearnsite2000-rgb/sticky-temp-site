@@ -331,7 +331,20 @@
     return { ready: n, total: urls.length };
   };
   // لودینگ فوراً و با اولویت بالا فقط فریم‌های «پوشش درشت» را می‌خواهد (بقیه بعد از لودینگ با kick عادی)
-  ProductShot.startPreload = function () { coarseUrls().forEach(function (x) { request(x, 950); }); };
+  // v4.3: «همهٔ فریم‌ها» (نمایشگر عادی + هشدار + سنسور + showcase) — لودینگ تا رسیدن/دیکود همه صبر می‌کند
+  function allUrls() {
+    return [].concat(SETS.display.normal, SETS.display.alert, SETS.sensor.all, SETS.display['new']);
+  }
+  ProductShot.fullProgress = function () {
+    var urls = allUrls(), n = 0;
+    for (var i = 0; i < urls.length; i++) { var c = cache[urls[i]]; if (c && c.state >= 2) n++; }
+    return { ready: n, total: urls.length };
+  };
+  // لودینگ همهٔ فریم‌ها را می‌خواهد: اول «درشت‌ها» (اولویت ۹۵۰)، بعد بقیه به‌ترتیب تدریجی
+  ProductShot.startPreload = function () {
+    coarseUrls().forEach(function (x) { request(x, 950); });
+    kick();   // preloadAll: نمایشگر عادی، سنسور، هشدار، showcase با ترتیب تدریجی
+  };
   ProductShot.isSetReady = function () {
     var all = [].concat(SETS.display.normal, SETS.display.alert, SETS.sensor.all);
     for (var i = 0; i < all.length; i++) if (!ready(all[i])) return false;

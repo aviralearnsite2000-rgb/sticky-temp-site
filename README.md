@@ -51,3 +51,6 @@ exposure 1.3 · tone-mapping neutral · environment neutral با چرخش نور
 
 ## نسخهٔ ۴: لودینگ + اصلاح اسکرول موبایل
 جزئیات کامل در `CHANGELOG_v4_FA.md`. فایل‌های تازه: `assets/css/loader.css`، `assets/js/loader.js`.
+
+## نسخهٔ ۴٫۳: لودینگ همهٔ فریم‌ها
+رفع تکه‌تکه شدن انیمیشن نمایشگر/سنسور بعد از لودینگ؛ جزئیات در `CHANGELOG_v4.3_FA.md`.
