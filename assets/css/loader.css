@@ -134,6 +134,8 @@ html.st-loading .site-header * {
 /* ---- متن ---- */
 .st-msg { font-size: clamp(14px, 3.6vmin, 16px); font-weight: 600; color: var(--st-ink); opacity: .92; text-align: center; min-height: 1.6em; direction: rtl; }
 .st-pct { font-size: 13px; font-weight: 600; color: var(--st-sky); font-variant-numeric: tabular-nums; direction: rtl; }
+/* v4.3.1: یادآوری ثابتِ صبر */
+.st-wait { font-size: 12px; font-weight: 500; color: rgba(234, 242, 253, .55); direction: rtl; min-height: 1.5em; }
 .st-bar { width: clamp(160px, 44vmin, 260px); height: 3px; border-radius: 3px; background: rgba(141, 184, 242, .16); overflow: hidden; }
 .st-bar span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--st-blue), var(--st-sky)); transform-origin: left center; transform: scaleX(0); }
 
