@@ -1,0 +1,184 @@
+/* ===== Sticky Temp — صفحهٔ لودینگ (v4) =====
+   ایدهٔ اصلی: خودِ محصول. ساعتِ دمای پیوسته با حلقهٔ مدرج که با پیشرفتِ بارگذاری
+   «گرم می‌شود»؛ سنسور وسط می‌تپد، خط ضربان رد می‌کشد و دمای بدن از ۳۵٫۰ به ۳۶٫۸ می‌رسد.
+   پایان: دو لنگهٔ سرمه‌ای از وسط باز می‌شوند و هیرو زیرشان شروع به حرکت می‌کند. */
+
+:root {
+  --st-navy: #0B1F3A;
+  --st-navy-2: #132F54;
+  --st-blue: #2563B8;
+  --st-sky: #8DB8F2;
+  --st-ink: #EAF2FD;
+}
+
+/* قفل کامل اسکرول تا پایان لودینگ (دسکتاپ + موبایل) */
+html.st-loading,
+html.st-loading body,
+html.st-opening,
+html.st-opening body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  touch-action: none;
+  height: 100%;
+}
+/* انیمیشن‌های هیرو پشت لودینگ شروع نشوند؛ بعد از باز شدن لنگه‌ها پخش می‌شوند */
+html.st-loading .hero *,
+html.st-loading .hero *::before,
+html.st-loading .hero *::after,
+html.st-loading .site-header * {
+  animation-play-state: paused !important;
+}
+
+.st-loader {
+  position: fixed; inset: 0; z-index: 99999;
+  display: grid; place-items: center;
+  direction: ltr;                      /* چیدمان گیج مستقل از RTL صفحه */
+  font-family: var(--font, 'Vazirmatn', system-ui, sans-serif);
+  color: var(--st-ink);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none;
+  contain: layout paint;
+}
+.st-loader[hidden] { display: none; }
+
+/* دو لنگهٔ پرده */
+.st-half {
+  position: absolute; left: 0; right: 0; height: 50.2%;
+  background: var(--st-navy);
+  transition: transform .95s cubic-bezier(.76, 0, .18, 1);
+  will-change: transform;
+}
+.st-top { top: 0; }
+.st-bot { bottom: 0; }
+/* درخشش پس‌زمینه روی هر دو نیمه یک‌تکه دیده شود */
+.st-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(60% 46% at 50% 46%, rgba(37, 99, 184, .38), transparent 70%),
+    radial-gradient(90% 60% at 50% 110%, rgba(141, 184, 242, .10), transparent 70%);
+  transition: opacity .5s ease;
+}
+
+.st-core {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(10px, 2.4vh, 20px);
+  padding: 0 24px;
+  transition: opacity .38s ease, transform .5s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ---- گیج ---- */
+.st-gauge {
+  position: relative;
+  width: clamp(190px, 46vmin, 300px);
+  aspect-ratio: 1;
+}
+.st-gauge svg.st-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.st-tick { stroke: rgba(141, 184, 242, .20); stroke-width: 2; stroke-linecap: round; transition: stroke .25s ease, stroke-width .25s ease; }
+.st-tick.on { stroke: var(--st-sky); stroke-width: 3; }
+.st-tick.head { stroke: #fff; stroke-width: 4; }
+.st-arc-track { fill: none; stroke: rgba(141, 184, 242, .10); stroke-width: 2; }
+
+/* سنسور وسط گیج */
+.st-patch {
+  position: absolute; left: 50%; top: 50%;
+  width: 34%; aspect-ratio: 1; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle at 34% 28%, #fff 0, #EAF2FD 38%, #BFD5F2 100%);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, .38), inset 0 -6px 14px rgba(37, 99, 184, .28);
+  display: grid; place-items: center;
+}
+.st-patch::before {                       /* سطح چسب دور سنسور */
+  content: ""; position: absolute; inset: -9%; border-radius: 50%;
+  border: 1.5px dashed rgba(141, 184, 242, .45);
+  animation: st-spin 14s linear infinite;
+}
+.st-eye {                                  /* LED سنسور */
+  width: 22%; aspect-ratio: 1; border-radius: 50%;
+  background: var(--st-blue);
+  box-shadow: 0 0 0 0 rgba(37, 99, 184, .55);
+  animation: st-beat 1.25s ease-out infinite;
+}
+.st-wave {                                 /* موج‌های سنجش */
+  position: absolute; left: 50%; top: 50%; width: 34%; aspect-ratio: 1;
+  border-radius: 50%; border: 1.5px solid var(--st-sky);
+  transform: translate(-50%, -50%) scale(1); opacity: 0;
+  animation: st-wave 2.6s cubic-bezier(.2, .6, .3, 1) infinite;
+}
+.st-wave:nth-of-type(2) { animation-delay: .87s; }
+.st-wave:nth-of-type(3) { animation-delay: 1.74s; }
+
+/* ---- عدد دما ---- */
+.st-read {
+  display: flex; align-items: baseline; gap: 6px;
+  direction: ltr; line-height: 1;
+}
+.st-read b {
+  font-size: clamp(44px, 11vmin, 68px); font-weight: 800; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums; color: #fff;
+  min-width: 3.1ch; text-align: right;
+}
+.st-read i { font-style: normal; font-weight: 600; font-size: clamp(18px, 4.4vmin, 26px); color: var(--st-sky); }
+
+/* ---- خط ضربان ---- */
+.st-ecg { width: clamp(200px, 56vmin, 340px); height: 36px; overflow: visible; }
+.st-ecg path { fill: none; stroke: var(--st-sky); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.st-ecg .base { stroke: rgba(141, 184, 242, .16); }
+.st-ecg .run {
+  stroke-dasharray: 90 410; stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 6px rgba(141, 184, 242, .7));
+  animation: st-run 1.9s linear infinite;
+}
+
+/* ---- متن ---- */
+.st-msg { font-size: clamp(14px, 3.6vmin, 16px); font-weight: 600; color: var(--st-ink); opacity: .92; text-align: center; min-height: 1.6em; direction: rtl; }
+.st-pct { font-size: 13px; font-weight: 600; color: var(--st-sky); font-variant-numeric: tabular-nums; direction: rtl; }
+.st-bar { width: clamp(160px, 44vmin, 260px); height: 3px; border-radius: 3px; background: rgba(141, 184, 242, .16); overflow: hidden; }
+.st-bar span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--st-blue), var(--st-sky)); transform-origin: left center; transform: scaleX(0); }
+
+.st-brand {
+  position: absolute; z-index: 2; left: 0; right: 0; bottom: max(26px, env(safe-area-inset-bottom));
+  text-align: center; font-weight: 800; font-size: 17px; letter-spacing: .01em; color: rgba(234, 242, 253, .78);
+  transition: opacity .3s ease;
+}
+.st-brand em { font-style: normal; color: var(--st-sky); }
+
+/* ---- حالت پایان ---- */
+.st-loader.is-done .st-ecg .run { animation-duration: .7s; }
+.st-loader.is-done .st-eye { background: #fff; }
+.st-loader.is-leaving .st-core,
+.st-loader.is-leaving .st-brand { opacity: 0; transform: scale(.94); }
+.st-loader.is-leaving .st-glow { opacity: 0; }
+.st-loader.is-open .st-top { transform: translateY(-101%); }
+.st-loader.is-open .st-bot { transform: translateY(101%); }
+
+/* ---- کیفریم‌ها ---- */
+@keyframes st-spin { to { transform: rotate(360deg); } }
+@keyframes st-beat {
+  0%   { box-shadow: 0 0 0 0 rgba(37, 99, 184, .6); transform: scale(1); }
+  14%  { transform: scale(1.18); }
+  70%  { box-shadow: 0 0 0 20px rgba(37, 99, 184, 0); transform: scale(1); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 184, 0); transform: scale(1); }
+}
+@keyframes st-wave {
+  0%   { transform: translate(-50%, -50%) scale(1);   opacity: .0; }
+  12%  { opacity: .55; }
+  100% { transform: translate(-50%, -50%) scale(3.1); opacity: 0; }
+}
+@keyframes st-run { to { stroke-dashoffset: -500; } }
+
+/* ---- کاهش حرکت ---- */
+@media (prefers-reduced-motion: reduce) {
+  .st-patch::before, .st-eye, .st-wave, .st-ecg .run { animation: none !important; }
+  .st-half { transition: opacity .4s ease; }
+  .st-loader.is-open .st-top, .st-loader.is-open .st-bot { transform: none; opacity: 0; }
+  .st-ecg .run { stroke-dasharray: none; }
+}
+
+/* ---- صفحه‌های کوتاه (موبایل افقی) ---- */
+@media (max-height: 520px) {
+  .st-core { flex-direction: row; gap: 28px; flex-wrap: wrap; justify-content: center; }
+  .st-gauge { width: 150px; }
+  .st-ecg, .st-brand { display: none; }
+}
