@@ -67,47 +67,49 @@ html.st-loading .site-header * {
   transition: opacity .38s ease, transform .5s cubic-bezier(.4, 0, .2, 1);
 }
 
-/* ---- گیج ---- */
+/* ---- حلقهٔ مینیمال (v4.4) ---- */
 .st-gauge {
+  --g: clamp(190px, 46vmin, 300px);
   position: relative;
-  width: clamp(190px, 46vmin, 300px);
-  aspect-ratio: 1;
+  width: var(--g); aspect-ratio: 1;
 }
 .st-gauge svg.st-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.st-tick { stroke: rgba(141, 184, 242, .20); stroke-width: 2; stroke-linecap: round; transition: stroke .25s ease, stroke-width .25s ease; }
-.st-tick.on { stroke: var(--st-sky); stroke-width: 3; }
-.st-tick.head { stroke: #fff; stroke-width: 4; }
-.st-arc-track { fill: none; stroke: rgba(141, 184, 242, .10); stroke-width: 2; }
+.st-track { fill: none; stroke: rgba(141, 184, 242, .14); stroke-width: 1.5; }
+.st-inner { fill: rgba(141, 184, 242, .035); stroke: rgba(141, 184, 242, .07); stroke-width: 1; }
+.st-prog {
+  fill: none; stroke: url(#stGrad); stroke-width: 3; stroke-linecap: round;
+  stroke-dasharray: 0 100; opacity: 0;
+  filter: drop-shadow(0 0 5px rgba(141, 184, 242, .55));
+}
+.st-orbit { transform-origin: 110px 110px; animation: st-spin 3.2s linear infinite; }
+.st-orbit-arc {
+  fill: none; stroke: var(--st-sky); stroke-width: 1.5; stroke-linecap: round;
+  stroke-dasharray: 9 91; opacity: .5;
+}
 
-/* سنسور وسط گیج */
-.st-patch {
-  position: absolute; left: 50%; top: 50%;
-  width: 34%; aspect-ratio: 1; border-radius: 50%;
-  transform: translate(-50%, -50%);
-  background:
-    radial-gradient(circle at 34% 28%, #fff 0, #EAF2FD 38%, #BFD5F2 100%);
-  box-shadow: 0 10px 34px rgba(0, 0, 0, .38), inset 0 -6px 14px rgba(37, 99, 184, .28);
-  display: grid; place-items: center;
+/* عبارت وسط حلقه */
+.st-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: calc(var(--g) * .035);
+  direction: rtl; text-align: center;
 }
-.st-patch::before {                       /* سطح چسب دور سنسور */
-  content: ""; position: absolute; inset: -9%; border-radius: 50%;
-  border: 1.5px dashed rgba(141, 184, 242, .45);
-  animation: st-spin 14s linear infinite;
-}
-.st-eye {                                  /* LED سنسور */
-  width: 22%; aspect-ratio: 1; border-radius: 50%;
-  background: var(--st-blue);
-  box-shadow: 0 0 0 0 rgba(37, 99, 184, .55);
+.st-eye {                                  /* نقطهٔ ضربان کوچک بالای متن */
+  width: calc(var(--g) * .035); aspect-ratio: 1; border-radius: 50%;
+  background: var(--st-sky);
+  box-shadow: 0 0 0 0 rgba(141, 184, 242, .5);
   animation: st-beat 1.25s ease-out infinite;
+  margin-bottom: calc(var(--g) * .02);
 }
-.st-wave {                                 /* موج‌های سنجش */
-  position: absolute; left: 50%; top: 50%; width: 34%; aspect-ratio: 1;
-  border-radius: 50%; border: 1.5px solid var(--st-sky);
-  transform: translate(-50%, -50%) scale(1); opacity: 0;
-  animation: st-wave 2.6s cubic-bezier(.2, .6, .3, 1) infinite;
+.st-title {
+  font-size: max(13px, calc(var(--g) * .082)); font-weight: 700; line-height: 1.3;
+  color: #fff; letter-spacing: 0;
 }
-.st-wave:nth-of-type(2) { animation-delay: .87s; }
-.st-wave:nth-of-type(3) { animation-delay: 1.74s; }
+.st-sub {
+  font-size: max(11px, calc(var(--g) * .056)); font-weight: 500; line-height: 1.3;
+  color: var(--st-sky);
+  animation: st-breathe 2.4s ease-in-out infinite;
+}
 
 /* ---- عدد دما ---- */
 .st-read {
@@ -134,8 +136,6 @@ html.st-loading .site-header * {
 /* ---- متن ---- */
 .st-msg { font-size: clamp(14px, 3.6vmin, 16px); font-weight: 600; color: var(--st-ink); opacity: .92; text-align: center; min-height: 1.6em; direction: rtl; }
 .st-pct { font-size: 13px; font-weight: 600; color: var(--st-sky); font-variant-numeric: tabular-nums; direction: rtl; }
-/* v4.3.1: یادآوری ثابتِ صبر */
-.st-wait { font-size: 12px; font-weight: 500; color: rgba(234, 242, 253, .55); direction: rtl; min-height: 1.5em; }
 .st-bar { width: clamp(160px, 44vmin, 260px); height: 3px; border-radius: 3px; background: rgba(141, 184, 242, .16); overflow: hidden; }
 .st-bar span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--st-blue), var(--st-sky)); transform-origin: left center; transform: scaleX(0); }
 
@@ -149,6 +149,7 @@ html.st-loading .site-header * {
 /* ---- حالت پایان ---- */
 .st-loader.is-done .st-ecg .run { animation-duration: .7s; }
 .st-loader.is-done .st-eye { background: #fff; }
+.st-loader.is-done .st-orbit { opacity: 0; transition: opacity .3s ease; }
 .st-loader.is-leaving .st-core,
 .st-loader.is-leaving .st-brand { opacity: 0; transform: scale(.94); }
 .st-loader.is-leaving .st-glow { opacity: 0; }
@@ -158,21 +159,17 @@ html.st-loading .site-header * {
 /* ---- کیفریم‌ها ---- */
 @keyframes st-spin { to { transform: rotate(360deg); } }
 @keyframes st-beat {
-  0%   { box-shadow: 0 0 0 0 rgba(37, 99, 184, .6); transform: scale(1); }
-  14%  { transform: scale(1.18); }
-  70%  { box-shadow: 0 0 0 20px rgba(37, 99, 184, 0); transform: scale(1); }
-  100% { box-shadow: 0 0 0 0 rgba(37, 99, 184, 0); transform: scale(1); }
+  0%   { box-shadow: 0 0 0 0 rgba(141, 184, 242, .55); transform: scale(1); }
+  14%  { transform: scale(1.25); }
+  70%  { box-shadow: 0 0 0 10px rgba(141, 184, 242, 0); transform: scale(1); }
+  100% { box-shadow: 0 0 0 0 rgba(141, 184, 242, 0); transform: scale(1); }
 }
-@keyframes st-wave {
-  0%   { transform: translate(-50%, -50%) scale(1);   opacity: .0; }
-  12%  { opacity: .55; }
-  100% { transform: translate(-50%, -50%) scale(3.1); opacity: 0; }
-}
+@keyframes st-breathe { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 @keyframes st-run { to { stroke-dashoffset: -500; } }
 
 /* ---- کاهش حرکت ---- */
 @media (prefers-reduced-motion: reduce) {
-  .st-patch::before, .st-eye, .st-wave, .st-ecg .run { animation: none !important; }
+  .st-orbit, .st-eye, .st-sub, .st-ecg .run { animation: none !important; }
   .st-half { transition: opacity .4s ease; }
   .st-loader.is-open .st-top, .st-loader.is-open .st-bot { transform: none; opacity: 0; }
   .st-ecg .run { stroke-dasharray: none; }
@@ -181,6 +178,6 @@ html.st-loading .site-header * {
 /* ---- صفحه‌های کوتاه (موبایل افقی) ---- */
 @media (max-height: 520px) {
   .st-core { flex-direction: row; gap: 28px; flex-wrap: wrap; justify-content: center; }
-  .st-gauge { width: 150px; }
+  .st-gauge { --g: 150px; }
   .st-ecg, .st-brand { display: none; }
 }

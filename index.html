@@ -77,7 +77,7 @@
     }, 36000);
   </script>
   <noscript><style>.st-loader{display:none!important}html.st-loading,html.st-loading body{overflow:auto!important;touch-action:auto!important}</style></noscript>
-  <link rel="stylesheet" href="assets/css/loader.css?v=4">
+  <link rel="stylesheet" href="assets/css/loader.css?v=4.4">
 
   <!-- سرعت: اول فونت و تصاویر هیرو؛ فریم‌های انیمیشن بعد از لود صفحه -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2109,11 +2109,21 @@
     <div class="st-core">
       <div class="st-gauge">
         <svg class="st-ring" viewBox="0 0 220 220" aria-hidden="true">
-          <circle class="st-arc-track" cx="110" cy="110" r="90"/>
-          <g id="stTicks"></g>
+          <defs>
+            <linearGradient id="stGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#BFD9FA"/><stop offset="1" stop-color="#2563B8"/>
+            </linearGradient>
+          </defs>
+          <circle class="st-track" cx="110" cy="110" r="100"/>
+          <circle class="st-inner" cx="110" cy="110" r="88"/>
+          <g class="st-orbit"><circle class="st-orbit-arc" cx="110" cy="110" r="100" pathLength="100"/></g>
+          <circle class="st-prog" id="stArc" cx="110" cy="110" r="100" pathLength="100" transform="rotate(-90 110 110)"/>
         </svg>
-        <span class="st-wave"></span><span class="st-wave"></span><span class="st-wave"></span>
-        <div class="st-patch"><span class="st-eye"></span></div>
+        <div class="st-center">
+          <span class="st-eye"></span>
+          <b class="st-title">در حال بارگذاری</b>
+          <span class="st-sub">لطفاً صبر کنید</span>
+        </div>
       </div>
       <div class="st-read" dir="ltr"><b id="stTemp">۳۵٫۰</b><i>°C</i></div>
       <svg class="st-ecg" viewBox="0 0 340 36" preserveAspectRatio="none" aria-hidden="true">
@@ -2123,11 +2133,10 @@
       <p class="st-msg" id="stMsg">سنسور در حال روشن شدن</p>
       <div class="st-bar" aria-hidden="true"><span id="stBar"></span></div>
       <p class="st-pct" id="stPct">۰٪</p>
-      <p class="st-wait">در حال بارگذاری؛ لطفاً صبر کنید</p>
     </div>
     <div class="st-brand" aria-hidden="true">Sticky <em>Temp</em></div>
   </div>
-  <script src="assets/js/loader.js?v=4.3"></script>
+  <script src="assets/js/loader.js?v=4.4"></script>
 
   <header class="site-header" id="siteHeader">
     <div class="container nav-inner">
@@ -4464,9 +4473,15 @@
     if (reduce) fab.style.animation = 'none';
     function setVisible(v) { fab.classList.toggle('is-visible', v); }
     function shouldShow() {
-      // هر دو شرط با هم: بالای #contact وارد نمای شد، یا به انتهای صفحه رسیدیم
+      // v4.5: تا پایان لودینگ و باز شدن پرده‌ها (و برداشتن قفل اسکرول) هرگز نمایش نده؛
+      // در زمان قفل، ارتفاع سند = ارتفاع پنجره است و شرط «انتهای صفحه» اشتباهاً درست می‌شد.
+      if (window.__stReady !== true) return false;
+      var doc = document.documentElement;
+      if (doc.scrollHeight <= window.innerHeight * 1.5) return false;   // صفحه هنوز کامل چیده نشده/قفل است
+      if (window.scrollY < window.innerHeight * 0.5) return false;       // بالای صفحه هرگز
+      // بخش #contact وارد نما شد، یا به انتهای صفحه رسیدیم
       if (contact.getBoundingClientRect().top < window.innerHeight) return true;
-      return (window.scrollY + window.innerHeight) >= (document.documentElement.scrollHeight - 40);
+      return (window.scrollY + window.innerHeight) >= (doc.scrollHeight - 40);
     }
     function updateFab() { setVisible(shouldShow()); }
     // IO فقط برای «کارایی» — تصمیم اصلی همیشه shouldShow() است
@@ -4479,6 +4494,7 @@
     window.addEventListener('scroll', updateFab, { passive: true });
     window.addEventListener('resize', updateFab);
     updateFab();
+    document.addEventListener('stickytemp:ready', function () { setTimeout(updateFab, 1200); });
     fab.addEventListener('click', function (e) {
       e.preventDefault();
       var hero = document.getElementById('hero');

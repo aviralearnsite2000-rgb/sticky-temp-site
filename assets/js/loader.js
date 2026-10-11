@@ -25,25 +25,9 @@
   var pctEl = document.getElementById('stPct');
   var msgEl = document.getElementById('stMsg');
   var barEl = document.getElementById('stBar');
-  var ticksG = document.getElementById('stTicks');
 
-  /* ---------- مدرج گیج: ۶۰ خط دور سنسور ---------- */
-  var N = 60, ticks = [];
-  (function build() {
-    if (!ticksG) return;
-    var ns = 'http://www.w3.org/2000/svg', cx = 110, cy = 110, r1 = 98, r2 = 106;
-    for (var i = 0; i < N; i++) {
-      var a = (-90 + (i / N) * 360) * Math.PI / 180;
-      var len = i % 5 === 0 ? 0 : 3;             // هر پنجمی بلندتر
-      var l = document.createElementNS(ns, 'line');
-      l.setAttribute('x1', (cx + Math.cos(a) * (r1 - len)).toFixed(2));
-      l.setAttribute('y1', (cy + Math.sin(a) * (r1 - len)).toFixed(2));
-      l.setAttribute('x2', (cx + Math.cos(a) * r2).toFixed(2));
-      l.setAttribute('y2', (cy + Math.sin(a) * r2).toFixed(2));
-      l.setAttribute('class', 'st-tick');
-      ticksG.appendChild(l); ticks.push(l);
-    }
-  })();
+  /* ---------- حلقهٔ پیشرفت (v4.4: قوس نازک به‌جای ۶۰ خط) ---------- */
+  var arcEl = document.getElementById('stArc');
 
   /* ---------- پیگیری آماده‌شدن منابع ---------- */
   var part = { font: 0, imgs: 0, load: 0, frames: 0 };
@@ -97,12 +81,9 @@
   function allDone() { return part.font >= 1 && part.imgs >= 1 && part.load >= 1 && part.frames >= 1; }
 
   function paint(p) {
-    var lit = Math.round((p / 100) * N);
-    for (var i = 0; i < N; i++) {
-      var on = i < lit;
-      if (ticks[i]._on !== on) { ticks[i]._on = on; ticks[i].classList.toggle('on', on); }
-      var head = on && i === lit - 1 && p < 100;
-      if (ticks[i]._h !== head) { ticks[i]._h = head; ticks[i].classList.toggle('head', head); }
+    if (arcEl) {
+      arcEl.style.strokeDasharray = p.toFixed(2) + ' 100';
+      arcEl.style.opacity = p < 0.4 ? 0 : 1;
     }
     // دمای بدن از ۳۵٫۰ تا ۳۶٫۸ (عادی؛ هرگز قرمز نمی‌شود)
     var t = 35 + 1.8 * (p / 100);
