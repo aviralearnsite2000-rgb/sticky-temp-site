@@ -375,6 +375,14 @@
       align-items: center; justify-content: center;
       /* پدینگ کمینه تا سنسور/نمایشگر بزرگ بمانند و متن توضیح جا شود */
       padding: 30px 20px 50px;
+      /* مدل مونتاژ از بیرونِ لبهٔ چپ وارد می‌شود (left منفی). در صفحهٔ RTL این بیرون‌زدگی
+         عرضِ اسکرولِ سند را زیاد می‌کرد و روی موبایل viewport/لایهٔ fixed پرواز تا ~۱۱۴px
+         جابه‌جا می‌شد (مبدأ اشتباه پرواز + پرش صفحه). clip بدون ساختن scroll-container،
+         بیرون‌زدگی افقی را قطع می‌کند. */
+      overflow-x: hidden;
+    }
+    @supports (overflow: clip) {
+      .model-stage { overflow-x: clip; }
     }
     .model-container {
       /* سقف ارتفاع viewport: 310 = پدینگ استیج (80) + فاصلهٔ متن (20) +
@@ -1485,10 +1493,20 @@
       .night .kicker { margin-bottom: 8px; }
       .night-lead { margin-top: 10px; line-height: 1.65; }
       .night-toggle { margin-top: 14px; }
-      .night-chart { margin: 12px -4% 0; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-inline: 4%; scrollbar-width: none; }
-      .night-chart::-webkit-scrollbar { display: none; }
-      .night-chart svg { min-width: 700px; }
+      /* v4.2: نمودار کامل داخل عرض صفحه جا می‌شود — اسکرول افقی و min-width حذف شد */
+      .night-chart { margin: 12px -4% 0; }
       .night-caption { position: sticky; right: 0; max-width: 92vw; margin-top: 10px; }
+      /* v4.2: با کوچک‌شدن SVG در موبایل، فونت/خط‌های داخلی نمودار جبرانی بزرگ می‌شوند */
+      .night-chart svg .n-grid text { font-size: 26px; }
+      .night-chart svg .n-th text { font-size: 26px; }
+      .night-chart svg .n-check text { font-size: 26px; }
+      .night-chart svg .n-check .n-check-t { font-size: 22px; }
+      .night-chart svg .n-gap text { font-size: 30px; }
+      .night-chart svg .n-alert text { font-size: 30px; }
+      .night-chart svg .n-curve { stroke-width: 6; }
+      .night-chart svg .n-check circle { stroke-width: 4; }
+      .night-chart svg .n-alert .ring { stroke-width: 3.5; }
+      .night-chart svg .n-alert .core { r: 11; }
       .nt-btn { padding: 10px 16px; font-size: .95rem; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -2541,7 +2559,7 @@
         </div>
         <div class="order-card">
           <h3>سفارش عمده و جزئی از طریق حساب تلگرام تولید کننده</h3>
-          <p class="order-card__lead">روی دکمهٔ زیر بزنید؛ پیام سفارش به‌صورت آماده در تلگرام باز می‌شود — فقط ارسال کنید.</p>
+          <p class="order-card__lead">برای سفارش، روی دکمهٔ زیر بزنید؛ پیام آماده در تلگرام باز می‌شود.</p>
           <a class="btn btn-primary btn--tg" href="https://t.me/StickyTemp?text=%D8%B3%D9%84%D8%A7%D9%85%20%D9%88%D9%82%D8%AA%E2%80%8C%D8%A8%D8%AE%DB%8C%D8%B1%D8%8C%20%D8%AF%D8%B1%D8%AE%D9%88%D8%A7%D8%B3%D8%AA%20%D8%B3%D9%81%D8%A7%D8%B1%D8%B4%20%D8%AF%D8%B3%D8%AA%DA%AF%D8%A7%D9%87%20Sticky%20Temp%20%D8%B1%D8%A7%20%D8%AF%D8%A7%D8%B1%D9%85.%20%D9%84%D8%B7%D9%81%D8%A7%D9%8B%20%D8%B1%D8%A7%D9%87%D9%86%D9%85%D8%A7%DB%8C%DB%8C%20%D8%A8%D9%81%D8%B1%D9%85%D8%A7%DB%8C%DB%8C%D8%AF." target="_blank" rel="noopener noreferrer" aria-label="سفارش Sticky Temp از طریق تلگرام">
             <!-- آیکن تلگرام: کانتور کامل + هواپیمای کاغذی (خودِ viewBox برش نمی‌خورد) -->
             <svg class="btn__ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm4.9 7.2-1.5 7a.7.7 0 0 1-1.1.4l-2.1-1.6-.9.9a.5.5 0 0 1-.4.2l.1-2 4.2-3.8c.2-.2 0-.3-.2-.1l-5.2 3.3-2.2-.7a.5.5 0 0 1 0-1l8.6-3.3c.4-.1.7.1.5.7Z"/></svg>
@@ -3899,6 +3917,25 @@
         }
       }
 
+      // مرز استیج ۳ (v4.1): وقتی مومنتمِ اسکرولِ بومی از restY رد می‌شود، فقط scrollTo کافی نیست —
+      // مومنتم هر فریم دوباره صفحه را بالا می‌برد و scrollTo برمی‌گرداند ⇒ لرزش/پرشِ ~۶۰px در هر فریم.
+      // راه‌حل: یک‌بار قفل overflow (که مومنتم را کاملاً می‌کُشد) + scrollTo(restY)، و بعد از چند ده میلی‌ثانیه
+      // آزاد کردن. حین قفل ورودی «فرمان» نیست (inAutoGrace) تا ژست نیمه‌کاره گام بعد را شلیک نکند.
+      let boundaryHoldTimer = 0;
+      function holdAtStage3Rest(restY) {
+        rootEl.classList.add('st-locked');
+        window.scrollTo(0, restY);
+        autoEndAt = performance.now();
+        if (boundaryHoldTimer) clearTimeout(boundaryHoldTimer);
+        boundaryHoldTimer = setTimeout(() => {
+          boundaryHoldTimer = 0;
+          if (isAnimating || revealWaiting) return;   // انیمیشن خودش قفل را مدیریت می‌کند
+          rootEl.classList.remove('st-locked');
+          autoEndAt = performance.now();
+          updateZone();
+        }, 140);
+      }
+
       // اسکرول آزاد: مدل fixed است پس موقعیت را با جایگاه هدف همگام می‌کنیم
       let scrollSyncRaf = 0;
       function syncOnScroll() {
@@ -3912,7 +3949,7 @@
           // فقط اگر اسکرول بومی ( momentum لمسی یا پرش چرخ ) از نقطهٔ پایان خروج رد شد،
           // همان‌جا نگه داشته شود تا استیج ۲ بدون انیمیشن معکوس دیده نشود
           const restY = stage3RestY();
-          if (window.scrollY < restY - 1) window.scrollTo(0, restY);
+          if (window.scrollY < restY - 1) holdAtStage3Rest(restY);
           return;
         }
         if (stage === 2) {
@@ -4179,7 +4216,8 @@
     el('circle', { 'class': 'ring', cx: ax, cy: ay, r: 14 }, ag);
     el('circle', { 'class': 'ring', cx: ax, cy: ay, r: 14 }, ag);
     el('circle', { 'class': 'core', cx: ax, cy: ay, r: 9 }, ag);
-    el('rect', { 'class': 'pill', x: ax - 92, y: ay - 76, width: 184, height: 42, rx: 21 }, ag);
+    var pw = window.innerWidth > 700 ? 184 : 260;   // موبایل: قرص پهن‌تر تا متنِ ۳۰px جا شود
+    el('rect', { 'class': 'pill', x: ax - pw / 2, y: ay - 76, width: pw, height: 42, rx: 21 }, ag);
     el('text', { x: ax, y: ay - 49, 'text-anchor': 'middle' }, ag, 'هشدار · ۰۲:۳۶');
 
     var toggle = document.querySelector('.night-toggle');
